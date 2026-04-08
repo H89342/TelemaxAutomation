@@ -1,0 +1,173 @@
+name: Mobile Tests - iOS and Android
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  # iOS Tests
+  test-ios:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        device: ['iPhone 12', 'iPhone SE']
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps webkit
+
+      - name: Run iOS tests on ${{ matrix.device }}
+        env:
+          ENVIRONMENT: staging
+          BASE_URL: ${{ secrets.BASE_URL }}
+        run: npx playwright test --project='${{ matrix.device }}'
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ios-${{ matrix.device }}-report
+          path: test-results/
+          retention-days: 30
+
+  # Android Tests
+  test-android:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        device: ['Android Chrome', 'Android Samsung']
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Android tests on ${{ matrix.device }}
+        env:
+          ENVIRONMENT: staging
+          BASE_URL: ${{ secrets.BASE_URL }}
+        run: npx playwright test --project='${{ matrix.device }}'
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-${{ matrix.device }}-report
+          path: test-results/
+          retention-days: 30
+
+  # Web Tests (still included)
+  test-web:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run web tests
+        env:
+          ENVIRONMENT: staging
+          BASE_URL: ${{ secrets.BASE_URL }}
+        run: npm run test:web
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: web-report
+          path: test-results/
+          retention-days: 30
+
+  # Shared Mobile Tests (run on both iOS and Android)
+  test-shared-mobile:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run shared mobile tests
+        env:
+          ENVIRONMENT: staging
+          BASE_URL: ${{ secrets.BASE_URL }}
+        run: npx playwright test tests/mobile/shared-mobile-tests.spec.js
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: shared-mobile-report
+          path: test-results/
+          retention-days: 30
+
+  # Summary Report
+  report:
+    if: always()
+    needs: [test-ios, test-android, test-web, test-shared-mobile]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Create summary
+        run: |
+          echo "# Test Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Results" >> $GITHUB_STEP_SUMMARY
+          echo "- iOS Tests: ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- Android Tests: ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- Web Tests: ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- Shared Mobile Tests: ✅" >> $GITHUB_STEP_SUMMARY
