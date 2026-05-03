@@ -3,7 +3,7 @@
  * Base class specifically for iOS with iOS-specific patterns
  */
 
-import { MobileBasePage } from '../MobileBasePage.js';
+import { MobileBasePage } from '../../MobileBasePage.js';
 
 export class IOSBasePage extends MobileBasePage {
   /**

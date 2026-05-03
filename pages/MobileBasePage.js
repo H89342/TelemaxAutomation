@@ -56,9 +56,10 @@ export class MobileBasePage extends BasePage {
    * @param {number} duration - Duration in ms
    */
   async swipe(startX, startY, endX, endY, duration = 300) {
-    await this.page.touchscreen.tap(startX, startY);
-    await this.page.touchscreen.move(endX, endY);
-    await this.page.touchscreen.release();
+   await this.page.mouse.move(startX, startY);
+await this.page.mouse.down();
+await this.page.mouse.move(endX, endY, { steps: 10 });
+await this.page.mouse.up();
   }
 
   /**

@@ -90,11 +90,12 @@ export const test = base.extend({
       async tap(page, selector) {
         await page.tap(selector);
       },
-      async swipe(page, startX, startY, endX, endY) {
-        await page.touchmove(startX, startY);
-        await page.touchend();
-        await page.touchstart(endX, endY);
-      },
+     async swipe(page, startX, startY, endX, endY) {
+  await page.mouse.move(startX, startY);
+  await page.mouse.down();
+  await page.mouse.move(endX, endY, { steps: 10 });
+  await page.mouse.up();
+},
       async longPress(page, selector) {
         await page.locator(selector).hover();
         await page.waitForTimeout(1000);

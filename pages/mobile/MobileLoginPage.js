@@ -3,7 +3,7 @@
  * Platform-specific selectors handled internally
  */
 
-import { MobileBasePage } from './MobileBasePage.js';
+import { MobileBasePage } from '../MobileBasePage.js';
 
 export class MobileLoginPage extends MobileBasePage {
   // iOS-specific selectors

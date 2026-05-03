@@ -32,5 +32,9 @@ const config = {
 export function getEnvironment(env = process.env.ENVIRONMENT || 'dev') {
   return config[env] || config.dev;
 }
-
+function requireEnvVar(name) {
+  const value = process.env[name];
+  if (!value) throw new Error(`Required environment variable "${name}" is not set`);
+  return value;
+}
 export default getEnvironment;
